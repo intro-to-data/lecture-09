@@ -1,0 +1,364 @@
+---
+title: "Statistically Insignificant?"
+author: "Andy Choens"
+date: "Intro To Data, In Quarantine"
+output:
+    ioslides_presentation:
+    widescreen: TRUE
+smaller: TRUE
+#runtime: shiny
+---
+
+## Tonight
+
+<div style="float:left; width:59%">
+- Check In: How's everyone doing?
+- Momento Mori
+    - We control very little in this world.
+    - It is an responsibility to our best with what we _do_ control.
+    - Be nice to someone tomorrow.
+- Labs: Covid 19 data or something else?
+- Reproducible Notebooks, Reactions
+- Statistical Insignificance
+- If not P-Value, What?
+</div>
+
+<div style="float:right; text-align:center; width:39%">
+<img src="https://cran.r-project.org/Rlogo.svg" width="50%">
+</div>
+
+## Get Involved!
+
+- I want everyone who can to "follow along at home".
+- I don't want you to sit there passively.
+- Unless you are a mushroom. In which case, carry-on.
+
+## Setup
+
+```{r}
+library(tidyverse)
+```
+
+## Data
+
+```{r}
+data(mtcars)
+```
+
+
+## CARS
+
+```{r}
+mtcars
+```
+
+## Motor Trend Car Road Tests
+
+- **Description:** 1974 Motor Trend, 1973–74 cars
+- **Format:** 32 observations on 11 variables
+- Col 1	mpg: Miles/(US) gallon
+- Col 2	cyl: Number of cylinders
+- Col 3	disp: Displacement (cu.in.)
+- Col 4	hp: Gross horsepower
+- Col 5	drat: Rear axle ratio
+- Col 6	wt: Weight (1000 lbs)
+- Col 7	qsec: 1/4 mile time
+- Col 8	vs: Engine (0 = V-shaped, 1 = straight)
+- Col 9	am: Transmission (0 = automatic, 1 = manual)
+- Col 10 gear: Number of forward gears
+- Col 11 carb: Number of carburetors
+
+
+## Weight as a function of Transmission
+
+**Question:** 
+
+- Is the average weight of a car varies by it's transmission type?
+- Motorheads, hang on.
+
+**Task:**
+
+- Use R to calculate the average weight of cars, stratified by transmission 
+  type. (use `group_by`, `summarize`, etc.)
+- Use R to plot a box plot of car weight, grouped by transmission type.
+  (use `ggplot`)
+
+## Avg Weight
+
+```{r}
+ByTrans <- 
+    mtcars %>% 
+    group_by(am) %>%
+    summarize(AvgWeight = round(mean(wt)*1000,2))
+ByTrans
+```
+
+- The average difference in weight is 
+  `r round(ByTrans$AvgWeight[ByTrans$am == 0] - ByTrans$AvgWeight[ByTrans$am == 1])`
+- This is coded in an odd way. 0 == automatic.
+
+
+## GGPLOT
+
+```{r}
+mtcars %>%
+    mutate(am = case_when(am == 1~"Manual",TRUE~"Automatic")) %>%
+    ggplot(aes(am, wt, color=am)) + geom_boxplot()
+```
+
+
+```{r}
+mtcars %>% 
+mutate(am = case_when(am == 1~"Manual",TRUE~"Automatic")) %>% 
+ggplot(aes(am, wt, color=am)) + geom_boxplot() 
+```
+
+
+
+
+## Do cars with different transmissions have different weights?
+
+- Is average car weight different in automatics v manuals?
+- Is average car weight a function of transmission?
+- R Formula: `wt~am`
+
+HINT: This are all saying the same basic thing!
+
+## T-Test
+
+```{r}
+mtcars %>%
+    mutate(am = case_when(am == 1~"Manual",TRUE~"Automatic")) %>%
+    t.test(wt~am,data=.)
+```
+
+## T-Test 2
+
+- The mean weights match what we did before.
+- Now, look at the p-value.
+- That is a very small number.
+- P is less than .05, so we would commonly reject the null hypothesis that the
+  average weight of automatic and manual transmission cars are the same.
+- And this makes sense. If you are "into cars" you know that automatic 
+  transmissions are much heavier than manuals.
+
+## NHST
+
+- What is Null Hypothesis Significance Testing (NHST)?
+- What is the meaning of a p-value?
+
+## Should we reject the null hypothesis?
+
+Wikipedia: In statistical hypothesis testing, the p-value or probability 
+value is the probability of obtaining test results at least as extreme as the
+results actually observed during the test, assuming that the null hypothesis 
+is correct.
+
+Translation: We have debased science to depend on something which is almost 
+never true. Or even rationale.
+
+## Another Example
+
+**Question:**
+
+- Do you think the average horsepower of a car differs because of the type 
+  of transmission?
+
+**Task:**
+
+- Use R to calculate the average horsepower of cars, stratified by transmission 
+  type.
+- Use R to plot a box plot of car horsepower, grouped by transmission type.
+
+## Avg Horses
+
+```{r}
+mtcars %>% group_by(am) %>% summarize(AvgHP = round(mean(hp),2),
+                                      SdHP  = round(sd(hp)))
+```
+
+## GGPLOT
+
+```{r}
+mtcars %>%
+    mutate(am = case_when(am == 1~"Manual",TRUE~"Automatic")) %>%
+    ggplot(aes(am, hp, color=am)) + geom_boxplot()
+```
+
+## Your Turn
+
+- YOU DO A `t.test()`
+- `hp` as a function of `am`
+
+```{r}
+mtcars %>% 
+    mutate(am = case_when(am == 1~"Manual",TRUE~"Automatic")) %>% 
+    t.test(hp~am, data = .)
+```
+
+- Not statistically significant.
+- But the box plot suggests there's a pattern.
+
+## T-Test Assumptions
+
+- Normal means, not badly skewed
+- sample mean and sample variance be independent . . . ha ha ha
+- And you will hear that the central limit theorem sample means of moderately 
+  large samples are often well-approximated by a normal distribution even if
+  the data are not normally distributed
+  - That last part really scares me.
+
+## What Factors Affect A T-Test?
+
+**Question:** What aspects of the data can affect the t-test results?
+
+## What Factors Affect A T-Test?
+
+**RESEARCHER DEGREES OF FREEDOM:**
+
+- Sample Size
+- Filtering
+- Hidden Biases (in the data, researchers, etc.)
+
+**IN THE DATA:**
+
+- Sample Size
+- Variance (this can also be a research degree of freedom)
+
+## Let's Play
+
+Take the last example:
+
+- Only include engines with 250 hp or less
+    - There are some obvious outliers.
+- Calculate the avg hp, box plot, AND t-test.
+- **Pro Tip:** You should copy/paste/edit what you did before.
+
+## Avg Weight <= 250 hp
+
+```{r}
+mtcars %>%
+    filter(hp <= 250) %>%
+    group_by(am) %>% 
+    summarize(AvgHP = round(mean(hp),2),
+              SdHP  = round(sd(hp)))
+```
+
+## GGPLOT <= 250 hp
+
+```{r}
+mtcars %>%
+    filter(hp <= 250) %>%
+    mutate(am = case_when(am == 1~"Manual",TRUE~"Automatic")) %>%
+    ggplot(aes(am, hp, color=am)) + geom_boxplot()
+```
+
+## T-Test <= 250 hp
+
+```{r}
+mtcars %>% filter(hp <= 250) %>% t.test(hp~am, data = .)
+```
+
+## Results
+
+- Now we have a statistically significant difference.
+- Those manuals cars w/ large hp are high performance cars.
+- I think the filter is defensible, but it a researcher choice.
+
+## Researcher Degrees Of Freedom
+
+- How often have you read a paper that said they omitted outliers? Who? Why?
+- How do you _really _know what factors could influence who does/does not get 
+  into a study?
+- Can you read a medical/psychology paper and ACTUALLY reproduce it?
+    - Compare this to a chemistry or physics publication.
+- Publishing the code only addresses one part of the problem.
+- Even how we group things are subject to researcher degrees of freedom:
+    - Gender (Male/Female?)
+    - Race (Definitions aren't consistent for subjects either.)
+    - Regional Differences (ADK v NYC v rural GA)
+
+## Does weight vary by shape?
+
+- By shape, I am talking about the arrangement of the cylinders.
+- Some six-cylinders are straight (in-line) engines and some are v-shaped.
+- So, we can only compare shape for six-cylinders.
+
+```{r}
+mtcars %>%
+    filter(cyl == 6) %>%
+    mutate(vs = case_when(vs == 0~"V-Shaped",TRUE~"Straight")) %>%
+    ggplot(aes(vs, hp, color=vs)) + geom_boxplot()
+```
+
+So, just looking at this, there is clearly a lot of overlap.
+
+## T-Test
+
+```{r}
+mtcars %>% 
+    filter(cyl == 6) %>%
+    mutate(vs = case_when(vs == 0~"V-Shaped",TRUE~"Straight")) %>%
+    t.test(hp~vs, data = .)
+```
+
+## But, what if our sample was larger?
+
+- But we don't live in a world where we only have 96 rows of data.
+- That's college-kid stuff.
+
+```{r}
+
+## Let's just get some more data.
+BigCars <- bind_rows(mtcars,mtcars,mtcars,mtcars,mtcars,mtcars)
+
+BigCars %>%
+    filter(cyl == 6) %>%
+    mutate(vs = case_when(vs == 0~"V-Shaped",TRUE~"Straight")) %>%
+    ggplot(aes(vs, hp, color=vs)) + geom_boxplot()
+```
+
+## And . . . T-Test?
+
+```{r}
+BigCars %>% 
+    filter(cyl == 6) %>%
+    mutate(vs = case_when(vs == 0~"V-Shaped",TRUE~"Straight")) %>%
+    t.test(hp~vs, data = .)
+```
+
+- The mean did not change. But now it is statistically significant.
+
+## What does this mean????
+
+- The more data you have, the more likely you are to find statistically significant results.
+- What is _more_ important, the effect size.
+- With enough data, most differences between groups will become statistically significant.
+- That'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Stay Safe
+
+<div style="margin:auto; width:80%">
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Keep-calm-and-carry-on-scan.jpg/321px-Keep-calm-and-carry-on-scan.jpg)
+
+</div>

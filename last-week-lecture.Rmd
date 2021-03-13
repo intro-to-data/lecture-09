@@ -1,0 +1,368 @@
+---
+title: "Ethics in Research, Review"
+output: 
+  html_notebook:
+    toc: true
+    toc_float:
+      toc_collapsed: true
+    toc_depth: 3
+    number_sections: true
+    theme: cerule
+---
+
+# Agenda
+
+- Last week we talked about how data is biased and how the measurement of things can alter the thing being studied. (I know, so meta.)
+- This week we will talk a bit more about the ethics of data science/research writ large.
+- Then we will segue to a discussion about what we have learned thus far and how it relates to the quiz.
+- We will do some examples of single table transformations.
+- And then we will introduce two brand new statistical ideas: Risk Ratio and Odds Ratio
+
+
+
+# Researchers Behaving Badly
+
+- Milgram Experiments
+- Tuskegee Syphilis Study
+
+If you are not already familiar with these bits of history, you should be. They are both prime examples of unethical research. 
+
+Due to the formatting applied to the text, it may be easier to read the following sections rendered into HTML. To do so, find the "Preview" button at the top of the window and use this to render the document into HTML.
+
+## Milgram Experiments
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/xOYLCy5PVgM" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+- After WWII, and the revelations of what had happened in Nazi Germany, and Imperial Japan, many Americas wanted to understand how and why people would commit such atrocities.
+- This is a fair question, and not one which we can fully answer today, although recent events and rhetoric dehumanizing political opponents should give us all pause.
+- Stanley Milgram, a Yale university professor designed a study to test the willingness of Americans to obey a authority figure.
+    - Test subjects were told they were helping develop a new learning technique.
+    - They were further told that no harm would come to anyone participating in the study.
+    - Milgram (and others) performed hundreds of variations all over the planet, with largely consistent results.
+    - This is arguably one of the best validated and reproduced psychological studies of all time.
+
+```{r echo=FALSE}
+url <- "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Milgram_experiment_v2.svg/378px-Milgram_experiment_v2.svg.png"
+knitr::include_graphics(url)
+```
+> The Study (from Wikipedia):
+> - "Experimenter" (E), who was in charge of the session.
+> - "Teacher" (T), a volunteer for a single session. The "teachers" were led to believe that they were merely assisting, whereas they were actually the subjects of the experiment.
+> - "Learner" (L), an actor and a confederate of the experimenter, who pretended to be a volunteer.
+> 
+> The subject and the actor arrived at the session together. The experimenter told them that they were taking part in "a scientific study of memory and learning", to see what the effect of punishment is on a subject's ability to memorize content. Also, he always clarified that the payment for their participation in the experiment was secured regardless of its development. The subject and actor drew slips of paper to determine their roles. Unknown to the subject, both slips said "teacher". The actor would always claim to have drawn the slip that read "learner", thus guaranteeing that the subject would always be the "teacher".
+> 
+> Next, the teacher and learner were taken into an adjacent room where the learner was strapped into what appeared to be an electric chair. The experimenter, dressed in a lab coat in order to appear to have more authority, told the participants this was to ensure that the learner would not escape. In a later variation of the experiment, the confederate would eventually plead for mercy and yell that he had a heart condition. At some point prior to the actual test, the teacher was given a sample electric shock from the electroshock generator in order to experience firsthand what the shock that the learner would supposedly receive during the experiment would feel like.
+> 
+> The teacher and learner were then separated so that they could communicate, but not see each other. The teacher was then given a list of word pairs that he was to teach the learner. The teacher began by reading the list of word pairs to the learner. The teacher would then read the first word of each pair and read four possible answers. The learner would press a button to indicate his response. If the answer was incorrect, the teacher would administer a shock to the learner, with the voltage increasing in 15-volt increments for each wrong answer (if correct, the teacher would read the next word pair.) The volts ranged from 15 to 450. The shock generator included verbal markings that vary from Slight Shock to Danger: Severe Shock.
+> 
+> The subjects believed that for each wrong answer the learner was receiving actual shocks. In reality, there were no shocks. After the learner was separated from the teacher, the learner set up a tape recorder integrated with the electroshock generator, which played pre recorded sounds for each shock level. As the voltage of the fake shocks increased, the learner began making audible protests, such as banging repeatedly on the wall that separated him from the teacher. In every condition the learner makes/says a predetermined sound or word. When the highest voltages were reached, the learner fell silent.
+> 
+> If at any time the teacher indicated a desire to halt the experiment, the experimenter was instructed to give specific verbal prods. The prods were, in this order:
+> 
+> 1. Please continue or Please go on.
+> 2. The experiment requires that you continue.
+> 3. It is absolutely essential that you continue.
+> 4. You have no other choice; you must go on.
+> 
+> Prod 2 could only be used if prod 1 was unsuccessful. If the subject still wished to stop after all four successive verbal prods, the experiment was halted. Otherwise, the experiment was halted after the subject had elicited the maximum 450-volt shock three times in succession.
+> 
+> The experimenter also had prods to use if the teacher made specific comments. If the teacher asked whether the learner might suffer permanent physical harm, the experimenter replied, "Although the shocks may be painful, there is no permanent tissue damage, so please go on." If the teacher said that the learner clearly wants to stop, the experimenter replied, "Whether the learner likes it or not, you must go on until he has learned all the word pairs correctly, so please go on."
+
+## Tuskegee Syphilis Study
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/vz4jE7huhMA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Again, from Wikipedia:
+
+> The Tuskegee Study of Untreated Syphilis in the Negro Male (informally referred to as the "Tuskegee Syphilis Experiment," the "Tuskegee Syphilis Study," the "Tuskegee Study of Untreated Syphilis in the African American Male," the "U.S. Public Health Service Syphilis Study at Tuskegee," or the "Tuskegee Experiment") was an ethically unjustified study conducted between 1932 and 1972 by the United States Public Health Service (PHS) and the Centers for Disease Control and Prevention (CDC). The purpose of this study was to observe the natural history of untreated syphilis. Although the African-American men who participated in the study were told that they were receiving free health care from the federal government of the United States, they were not.
+> 
+> The Public Health Service started the study in 1932 in collaboration with Tuskegee University (then the Tuskegee Institute), a historically black college in Alabama. In the study, investigators enrolled a total of 600 impoverished African-American sharecroppers from Macon County, Alabama. Of these men, 399 had latent syphilis, with a control group of 201 men who were not infected. As an incentive for participation in the study, the men were promised free medical care, but were deceived by the PHS, who never informed subjects of their diagnosis and disguised placebos, ineffective methods, and diagnostic procedures as treatment.
+> 
+The men were initially told that the "study" was only going to last six months, but it was extended to 40 years. After funding for treatment was lost, the study was continued without informing the men that they would never be treated. None of the infected men were treated with penicillin despite the fact that by 1947, the antibiotic was widely available and had become the standard treatment for syphilis.
+> 
+> The study continued, under numerous Public Health Service supervisors, until 1972, when a leak to the press resulted in its termination on November 16 of that year. The study caused the deaths of 128 of its participants, either directly from syphilis or from related complications.
+> 
+> The 40-year Tuskegee Study was a major violation of ethical standards, and has been cited as "arguably the most infamous biomedical research study in U.S. history." Its revelation led to the 1979 Belmont Report and to the establishment of the Office for Human Research Protections (OHRP)[16] and federal laws and regulations requiring institutional review boards for the protection of human subjects in studies involving them. The OHRP manages this responsibility within the United States Department of Health and Human Services (HHS). Its revelation has also been an important cause of distrust in medical science and the US government amongst African Americans.
+> 
+> On May 16, 1997, President Bill Clinton formally apologized on behalf of the United States to victims of the study, calling it shameful and racist. "What was done cannot be undone, but we can end the silence," he said. "We can stop turning our heads away. We can look at you in the eye, and finally say, on behalf of the American people, what the United States government did was shameful and I am sorry."
+
+Source: [Wikipedia: Tuskegee Syphilis Study](https://en.wikipedia.org/wiki/Tuskegee_Syphilis_Study)
+
+### Connections
+
+- There isn't a direct connection between Milgram and Tuskeegee.
+- Other than perhaps the former helps explain the latter.
+- Yes, the CDC was run by white men. Tuskeegee, a HBCU, was not.
+- Yet it did participate in the study, helping to recruit participants, etc.
+- I do not truly believe Milgram's experiments help us understand the Third Reich.
+- But, whole unethical, Milgram's experiments do help understand the world in which we live today.
+- Where a person with power uses their position of authority to get someone else to do something unethical.
+    - We see this in history/current events.
+    - For our purposes, this is the razor-blade many data scientists dance on every day.
+
+## Researchers Under Pressure
+
+- [Do Scientists Feel Pressure To Produce Positive Results?](http://earthsky.org/human-world/do-scientists-feel-pressure-to-produce-positive-results)
+- [Fired Florida Data Scientist Launches A Coronavirus Dashboard Of Her Own](https://www.npr.org/2020/06/14/876584284/fired-florida-data-scientist-launches-a-coronavirus-dashboard-of-her-own)
+- [Data Scientist Rebekah Jones, Facing Arrest, Turns Herself In To Florida Authorities](https://www.npr.org/sections/coronavirus-live-updates/2021/01/18/957914495/data-scientist-rebekah-jones-facing-arrest-turns-herself-in-to-florida-authoriti)
+- [What Has Happened Down Here Is The Winds Have Changed](http://andrewgelman.com/2016/09/21/what-has-happened-down-here-is-the-winds-have-changed/)
+
+On one level, science should just be about the numbers. But it isn't, it never was, and it never will be.
+
+- In my career, I have been pressured to make numbers tell a specific story that I didn't think the numbers told.
+- I know plenty of other people who have had the same experience.
+- And I know people who have placed that pressure on themselves, to get something published.
+- The ethics of this job are incredibly complicated.
+
+
+
+# Strokes
+
+Source: [Kaggle Stroke Prediction Dataset](https://www.kaggle.com/fedesoriano/stroke-prediction-dataset)
+
+> According to the World Health Organization (WHO) stroke is the 2nd leading cause of death globally, responsible for approximately 11% of total deaths.
+This dataset is used to predict whether a patient is likely to get stroke based on the input parameters like gender, age, various diseases, and smoking status. Each row in the data provides relavant information about the patient.
+Attribute Information
+
+1. id: unique identifier
+2. gender: "Male", "Female" or "Other"
+3. age: age of the patient
+4. hypertension: 0 if the patient doesn't have hypertension, 1 if the patient has hypertension
+5. heart_disease: 0 if the patient doesn't have any heart diseases, 1 if the patient has a heart disease
+6. ever_married: "No" or "Yes"
+7. work_type: "children", "Govt_jov", "Never_worked", "Private" or "Self-employed"
+8. residence_type: "Rural" or "Urban"
+9. avg_glucose_level: average glucose level in blood
+10. bmi: body mass index
+11. smoking_status: "formerly smoked", "never smoked", "smokes" or "Unknown"*
+12. stroke: 1 if the patient had a stroke or 0 if not
+*Note: "Unknown" in smoking_status means that the information is unavailable for this patient
+
+
+## The code chunk below is the setup chunk for all stroke related tasks.
+
+```{r}
+rm(list = ls())
+library(broom)
+library(tidymodels) ## Oooooh, we've not used this before.
+library(tidyverse)
+strokes <- read_csv("data/strokes.csv")
+strokes
+```
+
+We can ask a number of questions of this data, and we have some tools (functions) we can apply to the data:
+
+- `filter()`
+- `group_by()`
+- `summarize()`
+    - `min()`/`max()`
+    - `sum()`
+    - `n()`
+- `mutate()`
+
+
+## Task 01
+
+Who is more likely to have a stroke, men or women?
+
+- We want to calculate the percentage of patients with a stroke.
+- And we want that answer for men and women.
+    - group_by MUST come before summarize
+    - Unless you want to rename the column, you do not need ANY equal signs in the group_by parameters.
+
+No surprise here, men are more likely to have a stroke than women. 
+
+```{r}
+strokes %>%
+  group_by(gender) %>%
+  summarize(Num = sum(stroke),
+            Den = n(),
+            Per = Num/Den*100)
+```
+
+
+## Task 02
+
+Is the rate of stroke for men and women similar for patients with hypertension?
+
+- This is ALMOST the same question.
+- All we need to do is to filter down to those with hypertension.
+- Generally, filter should come before group by. Not always, but it's a nice rule-of-thumb.
+- Remember, filter needs at least one Boolean parameter.
+
+```{r}
+strokes %>%
+  filter(hypertension == 1) %>%
+  group_by(gender) %>%
+  summarize(Num = sum(stroke),
+            Den = n(),
+            Per = Num/Den*100)
+```
+
+
+## Task 03
+
+And sometimes, we need to make some new data!
+
+Compare the percentage of men over 50 who have had stroke to men under 50. Again, we need to do a couple of things, but this time you have to write the code. Based on what you know about aging, you should already expect men over the age of 50 to have had more strokes than those younger than 50.
+
+- We start with `strokes`.
+- We filter down to men only, which is the same as saying we filter out the women.
+- Create a new column `Over65`. (Think `mutate()`).
+- And now you can do a summary statistic just like always.
+
+```{r}
+## YOUR CODE HERE!
+
+```
+
+- The data transformation (dplyr) verbs we have learned are "composable".
+- This is fancy-speak for you can mix and match them to do many different things.
+- Including things we have not yet done before.
+
+
+## Next Steps
+
+- Based on what  I saw on the quiz, I feel like we are still struggling with this.
+- Do you all agree?
+
+
+
+# Risk Ratio
+
+***Warning:** Some of the tables below have embedded LaTeX, they look better rendered in HTML.*
+
+We will now introduce a new idea called the Risk Ratio and we will demonstrate how this ratio connects to the skills we have learned in this class. 
+
+- To do so, we will compare the risk of stroke in patients 65 and older to younger patients. We want to understand to what extent being older is a risk for having a stroke.
+- You should know, by now, that older patients are more likely to have a stroke.
+- But we don't have a TRUE/FALSE column for older patients, so we have to make it.
+    - This is similar to what we did above, but this time we want to create a new column in our strokes data set.
+    - And we want this in our source data, because we are going to spend a lot of time discussing this.
+
+```{r}
+strokes <- strokes %>% mutate(older = age >= 65)
+
+
+RiskStroke <- 
+  strokes %>%
+  group_by(older) %>%
+  summarize(Num = sum(stroke),
+            Den = n(),
+            RisK = Num/Den
+            )
+RiskStroke
+```
+
+Wow! Over 15% of our older patients have had a stroke while only a little over two percent of our younger patients have had a stroke. That is a huge difference.
+
+- **Question:** How do we express a difference in risk between two groups?
+- **Answer:** Risk Ratio
+
+But first, we should formally define risk:
+
+|         Group                   |   Diseased   |   Healthy   |      N Cases      |
+|:--------------------------------|:------------:|:-----------:|:-----------------:|
+| $$Exposed: Older == TRUE$$      |    $$D_E$$   |  $$H_E$$    | $$N_E = D_E/H_E$$ |
+| $$Not Exposed: Older == FALSE$$ |    $$D_N$$   |  $$H_N$$    | $$N_N = D_N/H_N$$ |
+
+The Risk Ratio comes from epidemiology, which was originally focused on acute illness. So, the terminology used to define it is a little clunky for our use case. Nonetheless, we calculate the Risk Ratio as:
+
+|       Group                |     Formula       |         Calculation       |
+|:---------------------------|:-----------------:|:-------------------------:|
+|$$Risk for Older == TRUE$$  | $$R_E = D_E/N_E$$ | $$.155 = 159/1027$$  |
+|$$Risk for Older == FALSE$$ | $$R_N = D_N/N_N$$ | $$.022 = 90/4083$$ |
+
+Here, we have to define being male as "exposed" and being female as "not exposed". And we can define the Risk Ratio as:
+
+|   Formula   |     Calculation       | Important Concept            |
+|:-----------:|:---------------------:|:-----------------------------|
+| $$R_E/R_N$$ | $$7.04 = .155/.022$$  | We only calculate this once. |
+
+That is a huge difference in risk, and hopefully "feels" right to you based on what you know about strokes. And now, the icing on the cake, because we can do this using our tools in R. This introduces a new idea, the square bracket operator, which is nothing more than a way of filtering on a vector rather than a table.
+
+```{r}
+RiskStroke %>%
+  summarize(
+    ## DOUBLE EQUAL SIGNS!!!
+    RiskRatio = Per[older == TRUE] / Per[older == FALSE]
+    )
+```
+
+- Yes, there is a small difference due to rounding.
+- This is as good a time as any to ease back into Base R. 
+
+```{r}
+a <- 1:10
+a
+```
+
+Given a vector with 10 items in it, we can do the following filtering:
+
+```{r}
+a[a > 5]
+a[a == 5]
+```
+
+
+
+# Odds Ratio
+
+Same thing, but odds rather than percent. Given our structure from above:
+
+|       Group                |     Formula       |         Calculation       |
+|:---------------------------|:-----------------:|:-------------------------:|
+|$$Odds for Older == TRUE$$  | $$O_E = D_E/H_E$$ | $$.183 = 159/868$$  |
+|$$Odds for Older == FALSE$$ | $$O_N = D_N/H_N$$ | $$.023 = 90/3993$$ |
+
+And we can operationalize this in R code as:
+
+```{r}
+OddsStroke <-
+  strokes %>%
+  group_by(older) %>%
+  summarize(D = sum(stroke),
+            H = sum(!stroke),
+            Odds = D/H
+            )
+OddsStroke
+```
+
+PLEASE OBSERVE the odds are slightly higher than our previously calculated risk scores simply because the denominator is smaller. For rare events, the odds and the risk are nearly identical.
+
+```{r}
+OddsStroke %>%
+  summarize(
+    ## DOUBLE EQUAL SIGNS!!!
+    OddsRatio = Odds[older == TRUE] / Odds[older == FALSE]
+    )
+```
+
+AND PLEASE OBSERVE that the Odds Ratio _is_ slightly higher than the Risk Ratio.
+
+The Odds Ratio _can_ overstate the ratio, for common events. Epidemiology is fond of the Odds Ratio rather than the Risk Ratio because there is a beautiful connection between the Odds Ratio and logistic regression.
+
+```{r}
+## You haven't seen any of this code before.
+## Don't panic, we are going to spend plenty of time discussing in the coming weeks.
+model <- 
+  logistic_reg(mode = "classification") %>%
+  set_engine(engine = "glm") %>% 
+  fit(stroke~older, data = strokes %>% mutate(stroke = as.factor(stroke)))
+
+model
+```
+
+There is a special relationship between logistic regression and the odds ratio:
+
+```{r}
+tidy(model)
+```
+
+```{r}
+exp(tidy(model)$estimate[2])
+```
+
+And this is useful because logistic regression allows to to model more complex models and relationships than we would ever want to model by hand.
+
