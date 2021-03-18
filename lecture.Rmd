@@ -134,7 +134,9 @@ ggplot(diamonds, aes(carat, price)) +
 - Log-transform the carat and price variables.
 
 ```{r}
-diamonds <- 
+## Note: I am creating a NEW copy of diamonds.
+## Note 2: I am using mutate to create new columns in the data.
+diamonds2 <- 
   diamonds %>%
   filter(carat <= 2.5) %>%
   mutate(lprice = log2(price),
@@ -145,8 +147,8 @@ diamonds <-
 - But I do want to prove to you that it works.
 
 ```{r}
-ggplot(diamonds, aes(price)) + geom_density()
-ggplot(diamonds, aes(lprice)) + geom_density()
+ggplot(diamonds2, aes(price)) + geom_density()
+ggplot(diamonds2, aes(lprice)) + geom_density()
 ```
 
 - Please note that the SHAPE of the resulting data would be the same regardless of which log we used. 
@@ -156,8 +158,107 @@ ggplot(diamonds, aes(lprice)) + geom_density()
 
 ```{r}
 ## Same plot as before, this time using logged data.
-ggplot(diamonds, aes(lcarat, lprice)) + 
-  geom_hex(bins = 50) +
-  geom_point() +
-  geom_smooth(method = "lm")
+ggplot(diamonds2, aes(lcarat, lprice)) + 
+  geom_hex(bins = 50)
 ```
+
+Assumptions of Linear Regression:
+
+- Weak exogeneity: Independent variables are assumed to be error free.
+    - ROTFLMAO!
+    - I mean, sure, we can measure weight well.
+    - Other things? Not so much.
+- Linearity: The relationship between our independent and dependent variable needs to be linear (or nearly so).
+    - OK, we fixed that.
+- Constant variance: Our dependent variable is not assumed to be error free, that we _do_ assume that error is random.
+- Independence of errors. This assumes that the errors of the response variables are uncorrelated with each other.
+- Lack of perfect multicollinearity in the predictors: Your independent variables cannot be correlated.
+    - For example, if color and clarity are correlated, that is bad.
+    
+```{r}
+## Same plot as before, this time using logged data.
+diamonds2 %>%
+  group_by(color, clarity) %>%
+  count() %>%
+  ggplot(aes(color, clarity, fill = n)) + 
+  geom_tile()
+```
+
+- We can reasonably claim these are not perfectly correlated.
+
+```{r}
+mod_diamond <- lm(lprice ~ lcarat, data = diamonds2)
+summary(mod_diamond)
+```
+
+- Let's briefly discuss what it is we have done.
+- We trained this data on the full sample, which we will discuss as less than ideal in the coming weeks.
+- But, what have we really done?
+
+```{r}
+demo <- sample_n(diamonds2, 100)
+demo <- add_predictions(demo, mod_diamond)
+demo %>% 
+  arrange(pred) %>%
+  ggplot() +
+  geom_point(aes(x = lcarat, y = lprice)) +
+  geom_line(aes(x = lcarat, y = pred), color = "blue")
+```
+
+- The vertical difference (positive and negative) between the blue line (our prediction) AND the black dots (real diamond price) are called the residual.
+- And we want these residuals to be normallmod_diamond <- lm(lprice ~ lcarat, data = diamonds2)
+summary(mod_diamond)y distributed.
+- The goal of any model is to reduce this size of the residuals.
+
+```{r}
+demo <- add_residuals(demo, mod_diamond)
+demo %>%
+  ggplot(aes(resid)) + geom_density()
+```
+
+And we can see that our residuals are not perfectly distributed, but not terribly so. Perhaps we can better understand what is going on here.
+
+```{r}
+ggplot(demo, aes(cut, resid)) + geom_boxplot()
+ggplot(demo, aes(color, resid)) + geom_boxplot()
+ggplot(demo, aes(clarity, resid)) + geom_boxplot()
+```
+
+- Cut, color, and clarity have a relationship with our residuals.
+- And the strongest appears to be clarity.
+
+```{r}
+mod_diamond2 <- lm(lprice ~ lcarat + clarity, data = diamonds2)
+summary(mod_diamond2)
+```
+- Using clarity, we went from an R-squared of .9334 to .9655.
+- Remember, R^2 is the percent of the variation in lprice explained by the model.
+- And we can prove that clarity was the next most important variable.
+
+```{r}
+demo <- add_residuals(demo, mod_diamond2)
+demo <- add_predictions(demo, mod_diamond2)
+demo %>%
+  ggplot(aes(resid)) + geom_density()
+```
+
+And, you can see that we have:
+
+- Reduced the min/max of our residuals.
+- Our residuals are more normally distributed.
+- And we can look at our actual results.
+
+```{r}
+demo %>%
+  mutate(true_predicted_price = 2^pred) %>%
+  select(price, true_predicted_price)
+```
+
+- And, we can see that this is a pretty legitimate model.
+- In an upcoming lab, you will get to explore different ways to make it better.
+
+# More reading:
+ - https://www.statisticssolutions.com/assumptions-of-linear-regression/
+ - https://en.wikipedia.org/wiki/Linear_regression
+ 
+ 
