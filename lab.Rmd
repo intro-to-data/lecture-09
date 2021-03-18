@@ -1,0 +1,296 @@
+---
+title: "Ratios"
+output: html_notebook
+---
+
+
+# Goals
+
+- Learn about Risk Ratio
+- Learn about Odds Ratio
+- Learn how to calculate these metrics using the tools we have learned in class.
+- Connection to Logistic regression
+
+
+## Setup
+
+```{r message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+rm(list = ls())
+library(broom)
+library(tidymodels)
+library(tidyverse)
+strokes <- read_csv("data/strokes.csv")
+```
+
+## Strokes
+
+Source: [Kaggle Stroke Prediction Dataset](https://www.kaggle.com/fedesoriano/stroke-prediction-dataset)
+
+> According to the World Health Organization (WHO) stroke is the 2nd leading cause of death globally, responsible for approximately 11% of total deaths.
+This dataset is used to predict whether a patient is likely to get stroke based on the input parameters like gender, age, various diseases, and smoking status. Each row in the data provides relavant information about the patient.
+Attribute Information
+
+```{r paged.print=TRUE}
+strokes
+```
+
+1. id: unique patient identifier
+2. gender: "Male", "Female" or "Other"
+3. age: age of the patient
+4. hypertension: 0 if the patient doesn't have hypertension, 1 if the patient has hypertension
+5. heart_disease: 0 if the patient doesn't have any heart diseases, 1 if the patient has a heart disease
+6. ever_married: "No" or "Yes"
+7. work_type: "children", "Govt_jov", "Never_worked", "Private" or "Self-employed"
+8. residence_type: "Rural" or "Urban"
+9. avg_glucose_level: average glucose level in blood
+10. bmi: body mass index
+11. smoking_status: "formerly smoked", "never smoked", "smokes" or "Unknown"*
+12. stroke: 1 if the patient had a stroke or 0 if not
+*Note: "Unknown" in smoking_status means that the information is unavailable for this patient
+
+
+
+# Lab
+
+## Task 01
+
+The data includes some information about the employment of the patients. Which work type is the most prevalent in this data set?
+
+The entries in the `work_type` column are formatted oddly, but that's OK. There's always _something_ funny about a data set.
+
+```{r}
+## YOUR CODE HERE!!!
+```
+
+To prevent confusion, your options below are identical to what you should have found in your data. In Canvas complete this task with one of the following:
+
+1. children
+2. Govt_job
+3. Never_worked
+4. Private
+5. Self-employed
+
+
+## Task 02
+
+Use R to calculate the percent of patients who are children (based on work type/Task 01).
+
+- In other words, divide the work_type count by the total.
+- And yes, you CAN do this without R, but the point is to do this using R.
+- And the easiest way is to calculate the percent for all of the work types.
+
+```{r}
+## YOUR CODE HERE!!!
+```
+
+
+## Task 03
+
+Between men and women, who is more likely to have a stroke had a stroke in this data set? I am going to provide you with some code for this, because I want everyone to be able to calculate this.
+
+- We want to calculate the percentage of patients with a stroke.
+    - Call the number of patients with a stroke `diseased`.
+    - Call the number of total patients `total`.
+    - You can calculate the percent (risk) using these columns in your summarize function. Or, you can add a mutate command and do it there. The answer will be the same.
+- And we want that answer for men and women.
+    - group_by MUST come before summarize
+    - Unless you want to rename the column, you do not need ANY equal signs in the group_by parameters.
+
+```{r}
+strokes %>%
+  group_by(gender) %>%
+  summarize(diseased   = sum(stroke),
+            total = n(),
+            risk     = diseased/total*100)
+```
+
+We would thus say that men have a HIGHER risk of stroke than women, based on this data.
+
+
+## Task 04
+
+In Task 03, we saw that men have an over-all higher risk of stroke than women. Do men with hypertension have a higher risk of stroke than women with hypertension?
+
+- This is ALMOST the same question.
+- All we need to do is to filter down to those with hypertension.
+- Generally, filter should come before group by. Not always, but it's a nice rule-of-thumb.
+- Remember, filter needs at least one Boolean parameter.
+
+```{r}
+## YOUR CODE HERE!!!
+```
+
+
+# Lab - Risk Ratio
+
+***Warning:** Some of the tables below have embedded LaTeX, they look better rendered in HTML.* To view this clean view of the data, hit the Preview button in RStudio.
+
+We will now introduce a new idea called the Risk Ratio and we will demonstrate how this ratio connects to the skills we have learned in this class. Our goal is to compare the risk of stroke in patients 65 and older to the risk of stroke in younger patients.
+
+- You should know, by now, that older patients are more likely to have a stroke.
+- But we don't have a TRUE/FALSE column for older patients, so we have to make it.
+    - This is similar to what we did above, but this time we want to create a new column in our strokes data set.
+    - And we want this in our source data, because we are going to spend a lot of time discussing this.
+
+```{r}
+## You will need to run this code chunk to complete the tasks below.
+
+## This is how we can create a new column in an existing data set.
+strokes <- strokes %>% mutate(older = age >= 65)
+
+
+RiskStroke <- 
+  strokes %>%
+  group_by(older) %>%
+  summarize(diseased = sum(stroke),
+            total = n(),
+            risk = diseased/total*100
+            )
+## We have saved this data in a table called RiskStroke.
+## This makes it easier to reuse later.
+## By using group_by, we reduced strokes from thousands of rows to two rows.
+```
+
+
+## Task 05
+
+Which age group has a higher risk for stroke?
+
+- Under 65
+- 65 and older
+
+```{r}
+## YOUR CODE HERE!!!
+
+## HINT: We calculated this above in RiskStroke . . . so how can you see the results?
+## This is one line of code . . . . . 
+```
+
+Wow! Over 15% of our older patients have had a stroke while only a little over two percent of our younger patients have had a stroke. That is a huge difference.
+
+## Task 06
+
+What is the risk ratio for older adults compared to younger patients?
+
+A risk ratio is how we can mathematically express the risk of one group compared to another. But first, we should formally define risk (view this in preview-mode):
+
+|         Group                   |   Diseased   |   Healthy   |      N Cases      |
+|:--------------------------------|:------------:|:-----------:|:-----------------:|
+| $$Exposed: Older == TRUE$$      |    $$D_E$$   |  $$H_E$$    | $$N_E = D_E/H_E$$ |
+| $$Not Exposed: Older == FALSE$$ |    $$D_N$$   |  $$H_N$$    | $$N_N = D_N/H_N$$ |
+
+The Risk Ratio comes from epidemiology, which was originally focused on acute illness. So, the terminology used to define it is a little clunky for our use case. Nonetheless, we calculate the Risk Ratio as:
+
+|       Group                |     Formula       |         Calculation       |
+|:---------------------------|:-----------------:|:-------------------------:|
+|$$Risk for Older == TRUE$$  | $$R_E = D_E/N_E$$ | $$.155 = 159/1027$$  |
+|$$Risk for Older == FALSE$$ | $$R_N = D_N/N_N$$ | $$.022 = 90/4083$$ |
+
+Here, we have to define being male as "exposed" and being female as "not exposed". And we can define the Risk Ratio as:
+
+|   Formula   |     Calculation       | Important Concept            |
+|:-----------:|:---------------------:|:-----------------------------|
+| $$R_E/R_N$$ | $$7.04 = .155/.022$$  | We only calculate this once. |
+
+That is a huge difference in risk, and hopefully "feels" right to you based on what you know about strokes. And now, the icing on the cake, because we can do this using our tools in R. This introduces a new idea, the square bracket operator, which is nothing more than a way of filtering on a vector rather than a table.
+
+```{r}
+## And now, we are going to reduce this two row table to one row.
+## Unless there a factor to group by, summarize will always return one row.
+RiskStroke %>%
+  summarize(
+    ## DOUBLE EQUAL SIGNS!!!
+    risk_ratio = risk[older == TRUE] / risk[older == FALSE]
+    )
+```
+
+- Yes, there is a small difference due to rounding.
+- This is as good a time as any to ease back into Base R. 
+
+```{r}
+a <- 1:10
+a
+```
+
+Given a vector with 10 items in it, we can do the following filtering:
+
+```{r}
+a[a > 5]
+a[a == 5]
+```
+
+
+
+# Lab - Odds Ratio
+
+Same thing, but odds rather than percent. Given our structure from above:
+
+|       Group                |     Formula       |         Calculation       |
+|:---------------------------|:-----------------:|:-------------------------:|
+|$$Odds for Older == TRUE$$  | $$O_E = D_E/H_E$$ | $$.183 = 159/868$$  |
+|$$Odds for Older == FALSE$$ | $$O_N = D_N/H_N$$ | $$.023 = 90/3993$$ |
+
+And we can operationalize this in R code as follows. But the denominator, is the number of healthy individuals rather than the total. This is an important difference.
+
+```{r}
+OddsStroke <-
+  strokes %>%
+  group_by(older) %>%
+  summarize(diseased = sum(stroke),
+            healthy = sum(!stroke),
+            odds = diseased/healthy
+            )
+OddsStroke
+```
+
+PLEASE OBSERVE the odds are slightly higher than our previously calculated risk scores simply because the denominator is smaller. For rare events, the odds and the risk are nearly identical.
+
+## Task 07
+
+What is the odds ratio for older adults compared to younger patients for stroke?
+
+```{r}
+OddsStroke %>%
+  summarize(
+    ## DOUBLE EQUAL SIGNS!!!
+    odds_ratio = odds[older == TRUE] / odds[older == FALSE]
+    )
+```
+
+AND PLEASE OBSERVE that the Odds Ratio _is_ higher than the Risk Ratio.
+
+The Odds Ratio _can_ overstate the ratio, for common events. Epidemiology is fond of the Odds Ratio rather than the Risk Ratio because there is a beautiful connection between the Odds Ratio and logistic regression.
+
+## Task 08
+
+Demonstrate that the same odds ratio can be obtained via logistic regression.
+
+```{r}
+## You haven't seen any of this code before.
+## Don't panic, we are going to spend plenty of time discussing in the coming weeks.
+model <- 
+  logistic_reg(mode = "classification") %>%
+  set_engine(engine = "glm") %>% 
+  fit(stroke~older, data = strokes %>% mutate(stroke = as.factor(stroke)))
+
+model
+```
+
+There is a special relationship between logistic regression and the odds ratio:
+
+```{r}
+tidy(model)
+```
+
+```{r}
+exp(tidy(model)$estimate[2])
+```
+
+
+Probability ranges from negative infinity to positive infinity. And, we can't model infinity. So a logistic regression model models the log of this because this constrains the values of the number between 0 and 1 but it means we have to take the exponent of the estimate.
+
+For more on this topic: [There's Nothing Odd About Th e Odds Ratio](https://www.statisticssolutions.com/theres-nothing-odd-about-the-odds-ratio-interpreting-binary-logistic-regression/)
+
+And this is useful because logistic regression allows to to model more complex models and relationships than we would ever want to model by hand.
+

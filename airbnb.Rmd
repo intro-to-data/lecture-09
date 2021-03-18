@@ -1,0 +1,82 @@
+---
+title: "Linear Regression and Centrality"
+output: html_notebook
+---
+
+## Setup
+
+We are going to discuss a couple of different data sets and a couple of different ideas tonight.
+
+```{r setup, include=FALSE}
+library(modelr)
+library(tidyverse)
+options(scipen=999)
+data_file <- "./data/new-york-city-airbnb-open-data.zip"
+airbnb <- read_csv(data_file)
+```
+
+## AirBNB
+
+Earlier in the semester we introduced the AirBNB data set.
+
+```{r}
+airbnb
+```
+
+What about the price? What is the average and median prices of AirBNBs?
+
+```{r}
+avg_price <- mean(airbnb$price)
+med_price <- median(airbnb$price)
+lower_95 <- avg_price - sd(airbnb$price) * 2
+upper_95 <- avg_price + sd(airbnb$price) * 2
+
+bind_rows(
+airbnb %>%
+  group_by(neighbourhood_group) %>%
+  summarize(lower_95 = round(mean(price) - sd(price)*2,0),
+            avg_price = round(mean(price),0),
+            upper_95 = round(mean(price) + sd(price)*2,0),
+            med_price = median(price)),
+airbnb %>%
+  summarize(neighbourhood_group = "New York City",
+            lower_95 = round(mean(price) - sd(price)*2,0),
+            avg_price = round(mean(price),0),
+            upper_95 = round(mean(price) + sd(price)*2,0),
+            med_price = median(price)) 
+)
+```
+
+- You should notice right away that our 95% confidence interval includes costs below zero.
+- If you can find me a BNB in Staten Island that will pay over $400 a night, I suggest you NOT take them up on the generous offer.
+- So what does the data really look like?
+
+```{r}
+airbnb %>%
+  ggplot(aes(x = price)) +
+  geom_density() +
+  geom_vline(aes(xintercept = avg_price), color = "red") +
+  geom_vline(aes(xintercept = med_price), color = "green") +
+  geom_vline(aes(xintercept = lower_95), color = "blue") +
+  geom_vline(aes(xintercept = upper_95), color = "blue")
+```
+
+And, if we "zoom in" on price below $2,500 a night, things don't really look that much saner.
+
+```{r}
+airbnb %>%
+  filter(price <= 2500) %>% 
+  ggplot(aes(x = price)) +
+  geom_density() +
+  geom_vline(aes(xintercept = avg_price), color = "red") +
+  geom_vline(aes(xintercept = med_price), color = "green") +
+  geom_vline(aes(xintercept = lower_95), color = "blue") +
+  geom_vline(aes(xintercept = upper_95), color = "blue")
+```
+
+- While less dramatically true, the mean and median are not well-aligned with the largest group of prices.
+- And again, I don't think any single summary statistic can really explain the patterns we see in the data, like the bumps at 500 and 1000.
+- This data is very multi-modal, which technically violates one of the key assumptions of the mean.
+    - Ironically, highly multi-modal data are sometimes treated as continuous and we all just ignore the bumps.
+    - Because, of course we do.
+
